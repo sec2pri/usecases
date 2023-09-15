@@ -1,0 +1,44 @@
+---
+title: "Secondary HGNC Symbols used in different Databases"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+This script compares gene symbol names from four different databases (KEGG, Reactome, WikiPathways, Gene Ontology) to the list of outdated HGNC symbols.
+
+## 0. Notebook setup
+The first section of this Notebook lists all the libraries required to run this script.
+
+```{r}
+plot(cars)
+```
+
+## 1. HGNC Symbol data download
+First, we load all the secondary symbols of HGNC to be used in this comparison.
+We filter out the symbols which are used as both primary and secondary symbols.
+
+```{r}
+plot(cars)
+```
+
+## 2. Data Download
+We download the data for each database, based on their API or RDF (depending on availability).
+
+```{r}
+plot(cars)
+```
+
+## 3. Data Comparison
+We compare the data for each database to the secondary HGNC symbols.
+
+```{r}
+plot(cars)
+```
+
+## 4. Data Visualization
+We visualize the data for all databases combined.
+
+```{r}
+plot(cars)
+```
