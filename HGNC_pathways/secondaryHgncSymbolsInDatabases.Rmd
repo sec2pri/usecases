@@ -11,7 +11,19 @@ This script compares gene symbol names from four different databases (KEGG, Reac
 The first section of this Notebook lists all the libraries required to run this script.
 
 ```{r}
-plot(cars)
+#Package manager:
+if(!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager",repos = "http://cran.us.r-project.org")
+#Package for path variable
+if(!"rstudioapi" %in% installed.packages()) BiocManager::install("rstudioapi")
+#Libraries required for markdown documents:
+if(!"markdown" %in% installed.packages()){install.packages("markdown")}
+if(!"rmarkdown" %in% installed.packages()){install.packages("rmarkdown")}
+
+#load libraries
+library(rstudioapi)
+
+# set working environment to current folder
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 ```
 
 ## 1. HGNC Symbol data download
@@ -25,8 +37,34 @@ plot(cars)
 ## 2. Data Download
 We download the data for each database, based on their API or RDF (depending on availability).
 
+### 1. KEGG
+
+### 2. Reactome
+
+### 1. WikiPathways
+
+### 4. Gene Ontology
+
+From the Quick-GO website (https://www.ebi.ac.uk/QuickGO/), we downloaded data based on the following criteria:
+I. Taxon: 9606 (Homo sapiens, human).
+II. Gene product type: Proteins, Reviewed (Swiss-Prot), all settings for Proteomes.
+
+Data was downloaded on: 1st of August, with 5199 annotations, as a TSV file.
 ```{r}
-plot(cars)
+# Obtain Working Directory to find data
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+getwd()
+setwd('..')
+work_DIR <- getwd()
+
+##GO terms
+go_terms <- read.delim(file = "Data/QuickGO-annotations-1659356807403-20220801.tsv", header = TRUE, sep = '\t')
+go_terms_unique <- unique(go_terms$SYMBOL)
+
+# Set Working Directory back to current folder
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+work_DIR <- getwd()
+
 ```
 
 ## 3. Data Comparison
