@@ -6,6 +6,8 @@ These cases are based on:
 
 1. Publications
    1. Use of HGNC symbols in EuroPubMed Central
-3. Databases
+2. Databases
    1. Use of HGNC symbols in KEGG, Reactome, WikiPathways, Gene Ontology
-5. Datasets
+3. Datasets
+   1. transcriptomics
+   2. metabolomics 
