@@ -23,7 +23,7 @@ if(!"rmarkdown" %in% installed.packages()){install.packages("rmarkdown")}
 library(rstudioapi)
 
 # set working environment to current folder
-setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+workingDirectory <- setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 ```
 
 ## 1. HGNC Symbol data download
@@ -41,7 +41,76 @@ We download the data for each database, based on their API or RDF (depending on 
 
 ### 2. Reactome
 
-### 1. WikiPathways
+```{r}
+##Reactome
+
+###PRIOR code to install SPARQl package; Package not available in CRAN anymore, only works for older version of R
+#if(!"SPARQL" %in% installed.packages()){
+#  install.packages("SPARQL")
+#}
+
+##Solution: download from archived version
+#Location to install archived packages:
+packageFolder <-paste0(workingDirectory, '/packages/SPARQL.tar.gz')
+downloadLinkSPARQL <-"https://cran.r-project.org/src/contrib/Archive/SPARQL/SPARQL_1.16.tar.gz"
+
+##Download archived version instead:
+if(!"downloader" %in% installed.packages()){
+  install.packages("downloader")
+}
+library("downloader")
+
+##Only download file if needed
+if (!file.exists(packageFolder)) {
+  download.file(downloadLinkSPARQL, packageFolder)
+}
+
+##Install the local version of the library
+install.packages(packageFolder, repos = NULL, type="source")
+
+library(SPARQL)
+##Connect to Endpoint WikiPathways
+endpointwp <- "https://sparql.wikipathways.org/sparql"
+
+## 1. Query metadata:
+queryMetadata <-
+"SELECT DISTINCT ?dataset (str(?titleLit) as ?title) ?date ?license 
+WHERE {
+   ?dataset a void:Dataset ;
+   dcterms:title ?titleLit ;
+   dcterms:license ?license ;
+   pav:createdOn ?date .
+ }"
+ #below code should be performed first to handle the ssl certificate error
+options(RCurlOptions = list(cainfo = paste0( tempdir() , "/cacert.pem" ), ssl.verifypeer = FALSE))
+resultsMetadata <- SPARQL(endpointwp,queryMetadata,curl_args=list(useragent=R.version.string))
+showresultsMetadata <- resultsMetadata$results
+remove(queryMetadata, resultsMetadata)
+
+## 2. Query Reactome PWs, through HGNC symbols:
+queryReactome <-
+"PREFIX cur:            <http://vocabularies.wikipathways.org/wp#Curation:> #to differentiate between Reactome and WP PWs.
+
+select distinct (fn:substring(?hgncId,37) as ?HGNC) (GROUP_CONCAT(DISTINCT str(?wpid);separator=', ') AS ?pathways)  (COUNT(DISTINCT str(?wpid)) AS ?usage)
+where {
+  ?pathwayRes a wp:Pathway ;                   #Define what is a pathway
+              wp:organismName 'Homo sapiens' ; #Filter pathways on species Human
+              dcterms:identifier ?wpid ;       #Obtain identifier of pathway
+              wp:ontologyTag cur:Reactome_Approved .  #Reactome: Reactome_Approved . WP: Curation:AnalysisCollection
+  
+  ?protein wp:bdbHgncSymbol ?hgncId ;          #Find proteins based on HGNC symbol
+           dcterms:isPartOf ?pathwayRes .      #Connect protein to PW
+}
+ORDER BY DESC (?usage)
+"
+##Execute query:
+resultsReactome <- SPARQL(endpointwp,queryReactome,curl_args=list(useragent=R.version.string))
+showresultsReactome <- resultsReactome$results
+remove(queryReactome, resultsReactome)
+```
+
+
+### 3. WikiPathways
 
 ### 4. Gene Ontology
 
