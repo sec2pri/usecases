@@ -1,3 +1,23 @@
+#!/usr/bin/env python
+"""
+EuropePMC Abstract Bibliometric Search Script for HGNC symbols
+
+This script performs HGNC gene symbol searches in article abstracts
+using the EuropePMC web services and stores the literature hit 
+metadata as results in JSON format.
+
+Author: Javier Millan Acosta
+ORCID: 0000-0002-4166-7093
+Affiliation: Maastricht University
+License: #TODO
+
+Usage:
+    python bibliometric_search.py [database_choice]
+
+    [database_choice]: Comma-separated list of database choices defined in the configuration file.
+
+"""
+
 import requests
 import pandas as pd
 import os
@@ -17,6 +37,16 @@ base_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=ABSTRA
 
 
 def check_config_file(choices, config_file_path=CONFIG):
+    """
+    Check if the specified sources exist in the config file.
+
+    Args:
+        choices (list): List of source choices to check.
+        config_file_path (str): Path to the config file.
+
+    Raises:
+        SystemExit: Exits with an error message if a source is not found in the config.
+    """
     # Check if the config file exists
     if not os.path.isfile(config_file_path):
         print(f"Config file '{config_file_path}' does not exist.")
@@ -30,6 +60,19 @@ def check_config_file(choices, config_file_path=CONFIG):
                 exit(1)
             
 def read_config_file(yaml_file_path, choice):
+    """
+    Read and validate the configuration data for a specific choice.
+
+    Args:
+        yaml_file_path (str): Path to the YAML config file.
+        choice (str): The selected choice.
+
+    Returns:
+        dict: The validated configuration data.
+
+    Raises:
+        SystemExit: Exits with an error message if the configuration is invalid.
+    """
     try:
         with open(yaml_file_path, 'r') as yaml_file:
             yaml_data = yaml.safe_load(yaml_file)
@@ -62,7 +105,16 @@ def ensure_directory_exists(directory_path, config=CONFIG):
 
 
 def search_identifier(symbol, keep_columns, base_url=base_url, cursor_mark=cursor_mark, page_size=page_size, format_type=format_type, ):
-    """Searches EuropePMC for the provided identifier, returns a list with all data for matches"""
+    """
+    Searches EuropePMC for the provided identifier and returns a DataFrame with matching results.
+
+    Args:
+        symbol (str): Identifier to search for.
+        keep_columns (list): List of columns to keep in the result DataFrame.
+
+    Returns:
+        pd.DataFrame: DataFrame containing search results.
+    """
     # Initialize the list to store retracted articles
     matches = []
     # Make the initial request to get the total number of results
@@ -123,6 +175,11 @@ def search_identifier(symbol, keep_columns, base_url=base_url, cursor_mark=curso
 def multiple_search(df, results_path, config):
     """
     Searches for all symbols in the provided dataset and builds a DataFrame with unique hits.
+
+    Args:
+        df (pd.DataFrame): Input dataset.
+        results_path (str): Path to save the results.
+        config (dict): Configuration data.
     """
     start_time = time.time()
     exclude = ['NA', 'Entry Withdrawn']
@@ -197,8 +254,6 @@ def main():
         config_choice = read_config_file(choice=choice, yaml_file_path=CONFIG)[choice]
         data = config_choice['path']
         results = config_choice['result']
-    
-    
         # Load the dataset
         df = pd.read_csv(data, sep='\t',)
         print("_______________\nBegin search")

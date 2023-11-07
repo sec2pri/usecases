@@ -16,3 +16,4 @@ bibliometric_symbol_usage/data/NCBI_secID2priID.tsv
 bibliometric_symbol_usage/data/UniProt_priIDs.tsv
 bibliometric_symbol_usage/data/UniProt_secID2priID.tsv
 bibliometric_symbol_usage/results/*json
+bibliometric_symbol_usage/result/hgnc_with_journal.json
