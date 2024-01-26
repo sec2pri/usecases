@@ -33,21 +33,72 @@ workingDirectory <- setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 First, we load all the primary and secondary symbols of HGNC to be used in this comparison (based on data release in Zenodo).
 We filter out the symbols which are used as both primary and secondary symbols (which could lead to false positive results).
 
-```{r}
-if(!file.exists("dataInput/HGNCMappings.txt")){
-  #download.file('https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), method = "wget", extra = "-r -p --random-wait") ##Update with latest file!
+```{r, include=FALSE}
+if(!file.exists("HGNC_secID2priID.tsv")){
+  #download.file('https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), method = "wget", extra = "-r -p --random-wait") ##Replace with Zenodo download when available!
 }
+
+HGNCMappings <- EnsemblReactome <- read.delim(paste0(workingDirectory, '/dataInput/HGNC_secID2priID.tsv'), header = TRUE, sep = "\t", dec = ".") #Create dataframe from HGNC Symbols data
+##Create unique set of primary IDs (without overlap to secondaries)
+primaryHGNCSymbols <- setdiff(HGNCMappings$primarySymbol, HGNCMappings$secondarySymbol)
+
+##Create unique set of secondary IDs (without overlap to primaries)
+secondaryHGNCSymbols <- setdiff(HGNCMappings$secondarySymbol, HGNCMappings$primarySymbol)
 ```
 
 ## 2. Data Download
-We download the data for each database, based on their API or RDF (depending on availability).
+We download the data for each database, based on their API, RDF, or other data download option (depending on availability).
 
 ### 1. KEGG
 The information in KEGG was obtained using an API call.
-```{r}
+```{r, include=FALSE}
+##Install and load required packages:
+api_packages <- c("httr", "jsonlite", "data.table")
+for (i in 1:length(api_packages)) {
+if(!api_packages[i] %in% installed.packages()){install.packages(api_packages[i])}
+}
+#install.packages(c("httr", "jsonlite", "data.table"))
+library(httr)
+library(jsonlite)
+library(data.table)
 
+## pathway map IDs listed under "1.3 Lipid metabolism"
+#lipid_kegg_maps <- c("00061", "00062", "00071", "00073", "00100", "00120", "00121", "00140", "00561", "00564", "00565", "00600", "00590", "00591", "00592", "01040") 
+kegg_maps_APIcall <- "https://rest.kegg.jp/list/pathway/hsa"
+res_maps = GET(kegg_maps_APIcall)
+Kegg_data_maps <- rawToChar(res_maps$content)
+Kegg_maps_total = data.frame()
+if(length(res_maps$content)>1){
+  cleaned_Kegg_data_maps <- fread(text = Kegg_data_maps, header=FALSE, fill = TRUE, sep = '\t')
+  df_maps <- data.frame(cleaned_Kegg_data_maps)
+  Kegg_maps_total <- rbind(Kegg_maps_total,df_maps)
+  }
+
+kegg_maps <- Kegg_maps_total$V1
+##Add URL for query item:
+kegg_genes_APIcall <- paste("https://rest.kegg.jp/link/hsa/", kegg_maps, sep="")
+
+##Create an empty dataframe to store the results of the loop:
+Kegg_genes_total = data.frame()
+
+## Execute API calls, example to obtain chemical compounds for a PW map:
+for (i in 1:length(nrow(Kegg_maps_total[1]))) {
+  ##Get the genes:
+  res_genes = GET(kegg_genes_APIcall[i])
+  Kegg_data_genes <- rawToChar(res_genes$content)
+  if(length(res_genes$content)>1){
+  cleaned_Kegg_data_genes <- fread(text = Kegg_data_genes, header=FALSE, fill = TRUE)
+  df_genes <- data.frame(cleaned_Kegg_data_genes)
+  Kegg_genes_total <- rbind(Kegg_genes_total,df_genes)
+  }
+}
+
+##Keep only dataframes with name "_total" to save space
+#rm(list = ls()[!grepl("_total", ls())])
+retain = c("primaryHGNCSymbols", "secondaryHGNCSymbols", "workingDirectory", "retain")
+rm(list=setdiff(ls(), retain))
 ```
-
+Unfortunately, the KEGG database does not allow to retrieve the labels within the pathway images, so we cannot use it further in our comparison.
 
 ### 2. Reactome
 For the Reactome content, we download the Physical Entity (PE) Identifier mapping files. Since the HGNC symbols are not available as a direct mapping, we retrieve all mappings from UniProt, Ensembl, and NCBI, to integrate their content on HGNC symbols.
@@ -95,7 +146,7 @@ mergedReactome <- Reduce(function(x, y) merge(x, y, all=TRUE), df_list, accumula
 #mergedReactome <- unique(mergedReactome) #Keep unique symbols only (to check if above function worked correctly)
 
 #Remove unnecessary data
-retain <- c("mergedReactome", "workingDirectory")
+retain <- append(retain, "mergedReactome")
 rm(list=setdiff(ls(), retain))
 ```
 
@@ -106,8 +157,8 @@ Compare the Reactome data against primary symbols first,  then against secondary
 
 
 ### 3. WikiPathways
-
-```{r, echo=FALSE}
+The WikiPathways data was queried in the RDF format.
+```{r, include=FALSE}
 ##WikiPathways (original pathways)
 
 ###PRIOR code to install SPARQl package; Package not available in CRAN anymore, only works for older version of R
@@ -153,9 +204,11 @@ resultsMetadata <- SPARQL(endpointwp,queryMetadata,curl_args=list(useragent=R.ve
 showresultsMetadata <- resultsMetadata$results
 remove(queryMetadata, resultsMetadata)
 
-##Rewrite to collect labels and original IDs.
+## 2. Query WikiPathways PWs, HGNC symbols used in Labels:
 
-## 2. Query WikiPathways PWs, through HGNC symbols:
+## 3. Query WikiPathways PWs, HGNC symbol used in original annotations:
+
+## 4. Query WikiPathways PWs, HGNC symbol Mappings:
 queryWikiPathways <-
 "PREFIX cur:            <http://vocabularies.wikipathways.org/wp#Curation:> #to differentiate between Reactome and WP PWs.
 
@@ -177,13 +230,16 @@ showresultsWikiPathways <- resultsWikiPathways$results
 remove(queryWikiPathways, resultsWikiPathways)
 ```
 
-### 4. Gene Ontology
 
-From the Quick-GO website (https://www.ebi.ac.uk/QuickGO/), we downloaded data based on the following criteria:
+
+
+### 5. Gene Ontology
+
+From the Quick-GO website (https://www.ebi.ac.uk/QuickGO/), we downloaded data based on the following criteria: --> Use API instead!
 I. Taxon: 9606 (Homo sapiens, human).
 
 Data was downloaded on: Nov. 6 (2023), with 1,685,892 annotations, as a TSV file.
-```{r}
+```{r, include=FALSE}
 GO_fileLocation <- paste0(workingDirectory, '/DataInput/... .tsv')
 ##GO terms
 go_terms <- read.delim(file = "DataInput/QuickGO-annotations-1659356807403-20220801.tsv", header = TRUE, sep = '\t')
