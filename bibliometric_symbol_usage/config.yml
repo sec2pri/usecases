@@ -1,0 +1,28 @@
+hgnc:
+  path: data/HGNC_secID2priID.tsv
+  firstColumn: primaryID
+  firstColumn_alt: primarySymbol
+  secondColumn: secondaryID
+  secondColumn_alt: secondarySymbol
+  result: 'result/hgnc_with_journal.json'
+  keep_columns:
+    - pmid
+    - pmcid
+    - title
+    - pubYear
+    - journalInfo.journal.title
+    - journal.journal.issn
+chebi:
+  path: /data/ChEBI_synonym2name.tsv
+  firstColumn: primaryID
+  firstColumn_alt: name
+  secondColumn: ""
+  secondColumn_alt: synonym
+  result: 'result/chebi.json'
+  keep_columns:
+    - pmid
+    - pmcid
+    - title
+    - pubYear
+    - journalInfo.journal.title
+    - journal.journal.issn

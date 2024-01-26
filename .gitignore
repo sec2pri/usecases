@@ -1,5 +1,9 @@
-results/hgnc_in_abstracts.json
+results/hgnc_with_journal.json
 .Rproj.user
 HGNC_pathways/packages/SPARQL.tar.gz
 HGNC_pathways/dataInput/*
 secondaryToPrimaryTables/*
+HGNC_ePMC/data/*.tsv
+bibliometric_symbol_usage/data/*
+bibliometric_symbol_usage/results/*json
+bibliometric_symbol_usage/overall_df.csv
