@@ -18,31 +18,97 @@ if(!"rstudioapi" %in% installed.packages()) BiocManager::install("rstudioapi")
 #Libraries required for markdown documents:
 if(!"markdown" %in% installed.packages()){install.packages("markdown")}
 if(!"rmarkdown" %in% installed.packages()){install.packages("rmarkdown")}
+if(!"dplyr" %in% installed.packages()){install.packages("dplyr")}
 
 #load libraries
 library(rstudioapi)
+library(dplyr)
+library(tidyr)
 
 # set working environment to current folder
 workingDirectory <- setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 ```
 
 ## 1. HGNC Symbol data download
-First, we load all the secondary symbols of HGNC to be used in this comparison.
-We filter out the symbols which are used as both primary and secondary symbols.
+First, we load all the primary and secondary symbols of HGNC to be used in this comparison (based on data release in Zenodo).
+We filter out the symbols which are used as both primary and secondary symbols (which could lead to false positive results).
 
 ```{r}
-plot(cars)
+if(!file.exists("dataInput/HGNCMappings.txt")){
+  #download.file('https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), method = "wget", extra = "-r -p --random-wait") ##Update with latest file!
+}
 ```
 
 ## 2. Data Download
 We download the data for each database, based on their API or RDF (depending on availability).
 
 ### 1. KEGG
+The information in KEGG was obtained using an API call.
+```{r}
+
+```
+
 
 ### 2. Reactome
+For the Reactome content, we download the Physical Entity (PE) Identifier mapping files. Since the HGNC symbols are not available as a direct mapping, we retrieve all mappings from UniProt, Ensembl, and NCBI, to integrate their content on HGNC symbols.
+```{r, include=FALSE}
+##Only download the data, if not available already locally.
+##UniProt mappings
+if(!file.exists("dataInput/UniProt2Reactome.txt")){
+  download.file('https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), method = "wget", extra = "-r -p --random-wait")
+}
+##Ensembl mappings
+if(!file.exists("dataInput/Ensembl2Reactome.txt")) {
+  download.file('https://reactome.org/download/current/Ensembl2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/Ensembl2Reactome.txt'), method = "wget", extra = "-r -p --random-wait")
+}
+##NCBI mappings
+if(!file.exists("dataInput/NCBI2Reactome.txt")) {
+  download.file('https://reactome.org/download/current/NCBI2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/NCBI2Reactome.txt'), method = "wget", extra = "-r -p --random-wait")
+}
 
+##Store the data in a dataframe, extract the relevant information, and merge results from three mapping systems (if needed):
+#Uniprot mappings
+UniprotReactome <- read.delim(paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), header = FALSE, sep = "\t", dec = ".") #Create dataframe from input data
+UniprotReactome <- UniprotReactome[UniprotReactome[8] == 'Homo sapiens',] #Only keep data for one species (Homo sapiens)
+UniprotReactome <- UniprotReactome[c(3)] #Retain column with HGNC Symbols
+UniprotReactome <- separate(UniprotReactome, V3, into = c("HGNC", "Location"), sep = " (?=(\\[[^\\]]*\\])+$)") ##Split localization data from HGNC symbol
+UniprotReactome <- UniprotReactome[c(1)] #remove localization data
+UniprotReactome <- unique(UniprotReactome) #Keep unique symbols only 
+#Ensembl mappings
+EnsemblReactome <- read.delim(paste0(workingDirectory, '/dataInput/Ensembl2Reactome.txt'), header = FALSE, sep = "\t", dec = ".") #Create dataframe from input data
+EnsemblReactome <- EnsemblReactome[EnsemblReactome[8] == 'Homo sapiens',] #Only keep data for one species (Homo sapiens)
+EnsemblReactome <- EnsemblReactome[c(3)] #Retain column with HGNC Symbols
+EnsemblReactome <- separate(EnsemblReactome, V3, into = c("HGNC", "Location"), sep = " (?=(\\[[^\\]]*\\])+$)") ##Split localization data from HGNC symbol
+EnsemblReactome <- EnsemblReactome[c(1)] #remove localization data
+EnsemblReactome <- unique(EnsemblReactome) #Keep unique symbols only 
+#NCBI mappings
+NCBIReactome <- read.delim(paste0(workingDirectory, '/dataInput/NCBI2Reactome.txt'), header = FALSE, sep = "\t", dec = ".") #Create dataframe from input data
+NCBIReactome <- NCBIReactome[NCBIReactome[8] == 'Homo sapiens',] #Only keep data for one species (Homo sapiens)
+NCBIReactome <- NCBIReactome[c(3)] #Retain column with HGNC Symbols
+NCBIReactome <- separate(NCBIReactome, V3, into = c("HGNC", "Location"), sep = " (?=(\\[[^\\]]*\\])+$)") ##Split localization data from HGNC symbol
+NCBIReactome <- NCBIReactome[c(1)] #remove localization data
+NCBIReactome <- unique(NCBIReactome) #Keep unique symbols only 
+
+#Merge the data together
+df_list <- list(UniprotReactome, EnsemblReactome, NCBIReactome)
+mergedReactome <- Reduce(function(x, y) merge(x, y, all=TRUE), df_list, accumulate=FALSE)
+#mergedReactome <- unique(mergedReactome) #Keep unique symbols only (to check if above function worked correctly)
+
+#Remove unnecessary data
+retain <- c("mergedReactome", "workingDirectory")
+rm(list=setdiff(ls(), retain))
+```
+
+Compare the Reactome data against primary symbols first,  then against secondary symbols, last count how many were not matching at all.
 ```{r}
-##Reactome
+
+```
+
+
+### 3. WikiPathways
+
+```{r, echo=FALSE}
+##WikiPathways (original pathways)
 
 ###PRIOR code to install SPARQl package; Package not available in CRAN anymore, only works for older version of R
 #if(!"SPARQL" %in% installed.packages()){
@@ -87,8 +153,10 @@ resultsMetadata <- SPARQL(endpointwp,queryMetadata,curl_args=list(useragent=R.ve
 showresultsMetadata <- resultsMetadata$results
 remove(queryMetadata, resultsMetadata)
 
-## 2. Query Reactome PWs, through HGNC symbols:
-queryReactome <-
+##Rewrite to collect labels and original IDs.
+
+## 2. Query WikiPathways PWs, through HGNC symbols:
+queryWikiPathways <-
 "PREFIX cur:            <http://vocabularies.wikipathways.org/wp#Curation:> #to differentiate between Reactome and WP PWs.
 
 select distinct (fn:substring(?hgncId,37) as ?HGNC) (GROUP_CONCAT(DISTINCT str(?wpid);separator=', ') AS ?pathways)  (COUNT(DISTINCT str(?wpid)) AS ?usage)
@@ -96,7 +164,7 @@ where {
   ?pathwayRes a wp:Pathway ;                   #Define what is a pathway
               wp:organismName 'Homo sapiens' ; #Filter pathways on species Human
               dcterms:identifier ?wpid ;       #Obtain identifier of pathway
-              wp:ontologyTag cur:Reactome_Approved .  #Reactome: Reactome_Approved . WP: Curation:AnalysisCollection
+              wp:ontologyTag cur:AnalysisCollection .  #Reactome: Reactome_Approved . WP: Curation:AnalysisCollection
   
   ?protein wp:bdbHgncSymbol ?hgncId ;          #Find proteins based on HGNC symbol
            dcterms:isPartOf ?pathwayRes .      #Connect protein to PW
@@ -104,30 +172,21 @@ where {
 ORDER BY DESC (?usage)
 "
 ##Execute query:
-resultsReactome <- SPARQL(endpointwp,queryReactome,curl_args=list(useragent=R.version.string))
-showresultsReactome <- resultsReactome$results
-remove(queryReactome, resultsReactome)
+resultsWikiPathways <- SPARQL(endpointwp,queryWikiPathways,curl_args=list(useragent=R.version.string))
+showresultsWikiPathways <- resultsWikiPathways$results
+remove(queryWikiPathways, resultsWikiPathways)
 ```
-
-
-### 3. WikiPathways
 
 ### 4. Gene Ontology
 
 From the Quick-GO website (https://www.ebi.ac.uk/QuickGO/), we downloaded data based on the following criteria:
 I. Taxon: 9606 (Homo sapiens, human).
-II. Gene product type: Proteins, Reviewed (Swiss-Prot), all settings for Proteomes.
 
-Data was downloaded on: 1st of August, with 5199 annotations, as a TSV file.
+Data was downloaded on: Nov. 6 (2023), with 1,685,892 annotations, as a TSV file.
 ```{r}
-# Obtain Working Directory to find data
-setwd(dirname(rstudioapi::getSourceEditorContext()$path))
-getwd()
-setwd('..')
-work_DIR <- getwd()
-
+GO_fileLocation <- paste0(workingDirectory, '/DataInput/... .tsv')
 ##GO terms
-go_terms <- read.delim(file = "Data/QuickGO-annotations-1659356807403-20220801.tsv", header = TRUE, sep = '\t')
+go_terms <- read.delim(file = "DataInput/QuickGO-annotations-1659356807403-20220801.tsv", header = TRUE, sep = '\t')
 go_terms_unique <- unique(go_terms$SYMBOL)
 
 # Set Working Directory back to current folder
