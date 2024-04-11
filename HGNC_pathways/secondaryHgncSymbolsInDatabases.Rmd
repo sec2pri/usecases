@@ -49,7 +49,7 @@ secondaryHGNCSymbols <- setdiff(HGNCMappings$secondarySymbol, HGNCMappings$prima
 ## 2. Data Download
 We download the data for each database, based on their API, RDF, or other data download option (depending on availability).
 
-### 1. KEGG
+### 2.1. KEGG
 The information in KEGG was obtained using an API call.
 ```{r, include=FALSE}
 ##Install and load required packages:
@@ -62,8 +62,7 @@ library(httr)
 library(jsonlite)
 library(data.table)
 
-## pathway map IDs listed under "1.3 Lipid metabolism"
-#lipid_kegg_maps <- c("00061", "00062", "00071", "00073", "00100", "00120", "00121", "00140", "00561", "00564", "00565", "00600", "00590", "00591", "00592", "01040") 
+## Get all pathway map IDs first:
 kegg_maps_APIcall <- "https://rest.kegg.jp/list/pathway/hsa"
 res_maps = GET(kegg_maps_APIcall)
 Kegg_data_maps <- rawToChar(res_maps$content)
@@ -74,6 +73,7 @@ if(length(res_maps$content)>1){
   Kegg_maps_total <- rbind(Kegg_maps_total,df_maps)
   }
 
+##Convert KEGG maps results to new API call to retrieve all genes within each map:
 kegg_maps <- Kegg_maps_total$V1
 ##Add URL for query item:
 kegg_genes_APIcall <- paste("https://rest.kegg.jp/link/hsa/", kegg_maps, sep="")
@@ -100,7 +100,7 @@ rm(list=setdiff(ls(), retain))
 ```
 Unfortunately, the KEGG database does not allow to retrieve the labels within the pathway images, so we cannot use it further in our comparison.
 
-### 2. Reactome
+### 2.2. Reactome
 For the Reactome content, we download the Physical Entity (PE) Identifier mapping files. Since the HGNC symbols are not available as a direct mapping, we retrieve all mappings from UniProt, Ensembl, and NCBI, to integrate their content on HGNC symbols.
 ```{r, include=FALSE}
 ##Only download the data, if not available already locally.
@@ -152,11 +152,23 @@ rm(list=setdiff(ls(), retain))
 
 Compare the Reactome data against primary symbols first,  then against secondary symbols, last count how many were not matching at all.
 ```{r}
+##Check overlap between prim and sec:
+uniqueSec <-  setdiff(secondaryHGNCSymbols, primaryHGNCSymbols)
 
+##Convert reactome data to vector format:
+mergedReactomeVector <- mergedReactome[['HGNC']]
+##Check primary symbols:
+primaryMatchesReactome <- intersect(primaryHGNCSymbols, mergedReactomeVector)
+##Amount:
+amountPrimaryMatchesReactome <- length(primaryMatchesReactome)
+##Check secondary symbols:
+secondaryMatchesReactome <- intersect(uniqueSec, mergedReactomeVector)
+##Amount:
+amountSecondaryMatchesReactome <- length(secondaryMatchesReactome)
 ```
 
 
-### 3. WikiPathways
+### 2.3. WikiPathways
 The WikiPathways data was queried in the RDF format.
 ```{r, include=FALSE}
 ##WikiPathways (original pathways)
@@ -230,11 +242,32 @@ showresultsWikiPathways <- resultsWikiPathways$results
 remove(queryWikiPathways, resultsWikiPathways)
 ```
 
+### 2.4. BiGG data Models
+```{r, include=FALSE}
+##Install and load required packages:
+api_packages <- c("httr", "jsonlite", "data.table")
+for (i in 1:length(api_packages)) {
+if(!api_packages[i] %in% installed.packages()){install.packages(api_packages[i])}
+}
+#install.packages(c("httr", "jsonlite", "data.table"))
+library(httr)
+library(jsonlite)
+library(data.table)
+
+biggModelsAPIcall <- 'http://bigg.ucsd.edu/api/v2/models'
+biggModels_maps = GET(biggModelsAPIcall)
+biggModels_data_maps <- rawToChar(biggModels_maps$content)
+biggModels_maps_total = data.frame()
+if(length(biggModels_maps$content)>1){
+  cleaned_biggModels_data_maps <- fread(text = biggModels_data_maps, header=FALSE, fill = TRUE, sep = '\t')
+  df_maps <- data.frame(cleaned_biggModels_data_maps)
+  biggModels_maps_total <- rbind(biggModels_maps_total,df_maps)
+  }
+
+```
 
 
-
-### 5. Gene Ontology
-
+### 2.5. Gene Ontology
 From the Quick-GO website (https://www.ebi.ac.uk/QuickGO/), we downloaded data based on the following criteria: --> Use API instead!
 I. Taxon: 9606 (Homo sapiens, human).
 
@@ -253,14 +286,12 @@ work_DIR <- getwd()
 
 ## 3. Data Comparison
 We compare the data for each database to the secondary HGNC symbols.
-
 ```{r}
 plot(cars)
 ```
 
 ## 4. Data Visualization
 We visualize the data for all databases combined.
-
 ```{r}
 plot(cars)
 ```
