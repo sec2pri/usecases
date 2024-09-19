@@ -150,7 +150,7 @@ retain <- append(retain, "mergedReactome")
 rm(list=setdiff(ls(), retain))
 ```
 
-Compare the Reactome data against primary symbols first,  then against secondary symbols, last count how many were not matching at all.
+Compare the Reactome data against primary symbols first, then against secondary symbols, last count how many were not matching at all.
 ```{r}
 ##Check overlap between prim and sec:
 uniqueSec <-  setdiff(secondaryHGNCSymbols, primaryHGNCSymbols)
@@ -241,6 +241,25 @@ resultsWikiPathways <- SPARQL(endpointwp,queryWikiPathways,curl_args=list(userag
 showresultsWikiPathways <- resultsWikiPathways$results
 remove(queryWikiPathways, resultsWikiPathways)
 ```
+
+Compare the WikiPathways data against primary symbols first, then against secondary symbols, last count how many were not matching at all.
+```{r}
+##Check overlap between prim and sec:
+uniqueSec <-  setdiff(secondaryHGNCSymbols, primaryHGNCSymbols)
+
+##Convert reactome data to vector format:
+mergedWikiPathwaysVector <- showresultsWikiPathways[['HGNC']]
+##Check primary symbols:
+primaryMatchesWikiPathways <- intersect(primaryHGNCSymbols, mergedWikiPathwaysVector)
+##Amount:
+amountPrimaryMatchesWikiPathways <- length(primaryMatchesWikiPathways)
+##Check secondary symbols:
+secondaryMatchesWikiPathways <- intersect(uniqueSec, mergedWikiPathwaysVector)
+##Amount:
+amountSecondaryMatchesWikiPathways <- length(secondaryMatchesWikiPathways)
+```
+
+
 
 ### 2.4. BiGG data Models
 ```{r, include=FALSE}
