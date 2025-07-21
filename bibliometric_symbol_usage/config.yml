@@ -11,7 +11,7 @@ hgnc:
     - title
     - pubYear
     - journalInfo.journal.title
-    - journal.journal.issn
+    - journalInfo.journal.issn
 chebi:
   path: /data/ChEBI_synonym2name.tsv
   firstColumn: primaryID
@@ -25,4 +25,4 @@ chebi:
     - title
     - pubYear
     - journalInfo.journal.title
-    - journal.journal.issn
+    - journalInfo.journal.issn
