@@ -1,0 +1,148 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0" version="28.0.7">
+  <diagram name="Page-1" id="dePYJw0SZkU55txbFFpM">
+    <mxGraphModel dx="1226" dy="1187" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-4" target="scgyb_ztoUYK9kt3Dvcc-5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-4">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="20" y="440" width="170" height="80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-5" target="scgyb_ztoUYK9kt3Dvcc-6" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Extract, deduplicate and filter primary and secondary gene symbols." link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-5">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="20" y="560" width="170" height="80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-6" target="scgyb_ztoUYK9kt3Dvcc-7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Start abstract text mining" link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-6">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="230" y="560" width="170" height="80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-7" target="scgyb_ztoUYK9kt3Dvcc-8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Query EuropePMC via API for papers containing the string &quot; {gene symbol} &quot; in their abstract for each primary and secondary symbol" link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-7">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="510" y="440" width="170" height="80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-8" target="scgyb_ztoUYK9kt3Dvcc-9" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Filter for &#39;Human&#39; MeSH terms to avoid false positives" link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-8">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="510" y="560" width="170" height="80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-9" target="scgyb_ztoUYK9kt3Dvcc-10" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Count publications containing the gene symbol in their abstracts and keep their PMID, PMCID and DOI" link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-9">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="510" y="680" width="170" height="80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-28" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-10" target="scgyb_ztoUYK9kt3Dvcc-23" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-29" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-10" target="scgyb_ztoUYK9kt3Dvcc-6" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="495" y="740" />
+              <mxPoint x="275" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-10" value="More symbols?" style="rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="455" y="790" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-20" value="Analyze primary and secondary symbol usage" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="800" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-23" target="scgyb_ztoUYK9kt3Dvcc-20" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Retrieve the date of approval of HGNC identifiers when available from the HGNC API" link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-23">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="230" y="790" width="170" height="80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-30" target="scgyb_ztoUYK9kt3Dvcc-52" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <UserObject label="Check for a new release" link="Get the latest release of OmicsFixID mappings for HGNC (HGNC_secID2priID.tsv)" id="scgyb_ztoUYK9kt3Dvcc-30">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+            <mxGeometry x="80" y="188" width="100" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-50" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-33" target="scgyb_ztoUYK9kt3Dvcc-34" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-33" value="Test mapping file generation" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="210" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-44" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-34" target="scgyb_ztoUYK9kt3Dvcc-39" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-45" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-34" target="scgyb_ztoUYK9kt3Dvcc-35" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-34" value="Fail?" style="rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="375" y="60" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-35" target="scgyb_ztoUYK9kt3Dvcc-36" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-35" value="Test identifier conformity to regular expressions" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="500" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-47" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-36" target="scgyb_ztoUYK9kt3Dvcc-40" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-48" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-36" target="scgyb_ztoUYK9kt3Dvcc-37" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-36" value="Fail?" style="rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="670" y="60" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-49" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-37" target="scgyb_ztoUYK9kt3Dvcc-38" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-37" value="Count added, edited and removed mapping pairs" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="800" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-43" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-38" target="scgyb_ztoUYK9kt3Dvcc-41" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-38" value="&amp;gt;0?" style="rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="970" y="60" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-39" value="Post issue about failed processing" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="355" y="188" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-40" value="Post issue about malformed identifiers" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="650" y="188" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-41" value="&lt;div&gt;Post issue about new&lt;/div&gt;&lt;div&gt;release and changes&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="950" y="188" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-54" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="scgyb_ztoUYK9kt3Dvcc-52" target="scgyb_ztoUYK9kt3Dvcc-33" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scgyb_ztoUYK9kt3Dvcc-52" value="Available?" style="rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="230" y="178" width="80" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
