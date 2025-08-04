@@ -5,5 +5,9 @@ HGNC_pathways/dataInput/*
 secondaryToPrimaryTables/*
 HGNC_ePMC/data/*.tsv
 bibliometric_symbol_usage/data/*
-bibliometric_symbol_usage/results/*json
+bibliometric_symbol_usage/result/*json
+bibliometric_symbol_usage/results/*
+bibliometric_symbol_usage/results_old/*
 bibliometric_symbol_usage/overall_df.csv
+bibliometric_symbol_usage/overall_df.pkl
+bibliometric_symbol_usage/notes_sec2pri_29jul.md
