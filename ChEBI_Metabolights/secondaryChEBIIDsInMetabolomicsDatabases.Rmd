@@ -189,49 +189,53 @@ ggplot(dat, aes(x=itemCounts)) + geom_histogram(binwidth=.5)
 ### 2.3 Obtain content of .maf files per study ID
 ```{r}
 # Check content of MAF file given a study ID and MAF file name
-download_maf_files <- function(study_id, MAF_File_Names) {
+download_maf_files <- function(study_id, maf_filenames) {
   ##Create List to add ID data per dataset
-df_list <- list()
-
-    # Construct URL for downloading MAF file
-    url <- paste0(BASE_URL, "/", study_id, "/download?file=", maf_filename)
-    print(url)
-    response <- GET(url) # Send GET request to download MAF file
+  df_list <- list()
+  
+  for (maf_filename in maf_filenames) {
     
-    # Check if download was successful
+    # Construct URL for downloading MAF file
+    url <- paste0(BASE_URL, "/", study_id, "/download?file=", URLencode(maf_filename))
+    
+    message("Requesting URL: ", url)
+    
+    response <- GET(url)
+    
     if (status_code(response) == 200) {
       response_content <- content(response, as = "text", encoding = "UTF-8")
       
       # Read tsv content 
       tsv_df <- read_tsv(response_content, show_col_types = FALSE, col_types = cols(.default = col_guess()))
       # Obtain ID mapping data
-      idData <- na.omit(tsv_df$database_identifier) ##Removing rows without IDs
+      idData <- na.omit(tsv_df$database_identifier)##Removing rows without IDs
       filtered_vector <- idData[idData != "unknown"] ##Some data is labeled "unknown", also filter out
       
-      ## Create a vector same length as IDs to combine results later.
-      studyName <- rep(study_id, length(filtered_vector))
-      
-      # Create dataframe and add data
-               tempDF <- data.frame(
-               studyName = rep(study_id, length(filtered_vector)),
-               IDs = filtered_vector,
-               stringsAsFactors = FALSE
-       )
-      
-      #Combine data from calls together; based on file name to avoid overwritting when 2 maf files exist per study.                  
-      df_list[[maf_filename]] <- tempDF
-      
+      if (length(filtered_vector) > 0) {
+        tempDF <- data.frame(
+          studyName = rep(study_id, length(filtered_vector)),
+          IDs = filtered_vector,
+          stringsAsFactors = FALSE
+        )
+        
+        #Combine data from calls together; based on file name to avoid overwritting when 2 maf files exist per study.     
+        df_list[[maf_filename]] <- tempDF
+      } else {
+        message("No valid IDs found in file: ", maf_filename)
+      }
     } else {
-      stop("Failed to access MAF file: ", maf_filename, " for study: ", study_id)
+      warning("Failed to access MAF file: ", maf_filename, " for study: ", study_id)
     }
-return(df_list)  
+  }
+  
+  return(df_list)
 }
 
 # Initialize master list
 all_dfs <- list()
 
 # Loop through each study ID and save the MAF files ID data
-for (study_id in names(MAF_File_Names[1:16])) {
+for (study_id in names(MAF_File_Names[1:20])) {
   
 # Get MAF file names for current study ID
 maf_filename <- MAF_File_Names[[study_id]]
