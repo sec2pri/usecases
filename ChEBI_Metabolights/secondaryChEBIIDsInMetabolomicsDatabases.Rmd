@@ -24,7 +24,7 @@ if(!"rmarkdown" %in% installed.packages()){install.packages("rmarkdown")}
 if(!"dplyr" %in% installed.packages()){install.packages("dplyr")}
 if(!"wget" %in% installed.packages()){install.packages("wget")}
 #if(!"readxl" %in% installed.packages()){install.packages("readxl")}
-#if(!"stringr" %in% installed.packages()){install.packages("stringr")}
+if(!"stringr" %in% installed.packages()){install.packages("stringr")}
 #Libraries required for metabolighteR package:
 #if(!"magrittr" %in% installed.packages()){install.packages("magrittr")}
 #if(!"remotes" %in% installed.packages()){install.packages("remotes")}
@@ -48,7 +48,7 @@ library(dplyr)
 library(tidyr)
 library(wget)
 #library(readxl)        # Load readxl package for reading Excel files
-#library(stringr)        # To extract strings based on first complete match
+library(stringr)        # To extract strings based on first complete match
 #library(magrittr)
 #library(remotes)         # Load remotes package for installing packages from GitHub
 #library(metabolighteR)  # Load metabolighteR package for metabolite analysis
@@ -81,7 +81,6 @@ BASE_URL <- "https://www.ebi.ac.uk:443/metabolights/ws/studies"
 
 ### 2.1 Get all study IDs currently available in Metabolights
 ```{r}
-
 ##Access study IDs
 getStudies <- function() {
   studies <-
@@ -101,14 +100,21 @@ vStudyIds <- as.vector(allstudyIds[[1]])
 
 ### 2.2 Get all .maf file names for available study IDs
 ```{r}
-
 # Retrieve MAF file names per study ID
 get_maf_files <- function(study_id) {
+  ##Add list to store output
+  maf_files <- list ()
+  
   # Construct URL for the specific study ID
   url <- paste0(BASE_URL, "/", study_id, "/files?include_raw_data=false")
   
+  # Print message to console to keep track of status and potential errors.
+    message("Requesting URL: ", url)
+  # Pause between each URL call
+    Sys.sleep(1)
+  
   # Send GET request to retrieve data
-  response <- GET(url)
+    response <- GET(url)
   
   # Check if the request was successful
   if (status_code(response) == 200) {
@@ -139,20 +145,20 @@ get_maf_files <- function(study_id) {
 # Function to process multiple study IDs and get their MAF file names
 get_maf_filenames_for_studies <- function(study_ids) {
   # Initialize list to store MAF file names or error messages
-  maf_file_names <- list()
+  MAF_file_names <- list()
   
   # Iterate over each study ID
   for (study_id in vStudyIds) {
     tryCatch({
       # Attempt to fetch MAF file names for current study ID
-      maf_file_names[[study_id]] <- get_maf_files(study_id)
+      MAF_file_names[[study_id]] <- get_maf_files(study_id)
     }, error = function(e) {
       # Store error message if an error occurs
-      maf_file_names[[study_id]] <- paste("Error:", e$message)
+      MAF_file_names[[study_id]] <- paste("Error:", e$message)
     })
   }
   
-  return(maf_file_names)  # Return list of MAF file names or error messages
+  return(MAF_file_names)  # Return list of MAF file names or error messages
 }
 
 # Call the function to retrieve MAF file names for the study IDs
@@ -169,7 +175,6 @@ length(difference)
 
 ##Analyze how many studies have no .maf file, and how many have 2 (or more files)
 itemCounts <- (sapply(MAF_File_Names, length))
-totalFilecount <- sum(itemCounts)
 MoreThanOne_MAFfile <- sum(itemCounts > 1)
 
 ##Convert count data to see distribution numbers
@@ -190,26 +195,38 @@ ggplot(dat, aes(x=itemCounts)) + geom_histogram(binwidth=.5)
 ```{r}
 # Check content of MAF file given a study ID and MAF file name
 download_maf_files <- function(study_id, maf_filenames) {
-  ##Create List to add ID data per dataset
-  df_list <- list()
+  ## Create List to add ID data per dataset
+  df_list_sanityCheck <- list()
   
   for (maf_filename in maf_filenames) {
     
     # Construct URL for downloading MAF file
     url <- paste0(BASE_URL, "/", study_id, "/download?file=", URLencode(maf_filename))
     
+    # Print message to console to keep track of status and potential errors.
     message("Requesting URL: ", url)
     
+    # Run the API call
     response <- GET(url)
+    # Pause between each URL call
+    Sys.sleep(1)
     
     if (status_code(response) == 200) {
+      # Access content of .maf file
       response_content <- content(response, as = "text", encoding = "UTF-8")
       
-      # Read tsv content 
-      tsv_df <- read_tsv(response_content, show_col_types = FALSE, col_types = cols(.default = col_guess()))
-      # Obtain ID mapping data
-      idData <- na.omit(tsv_df$database_identifier)##Removing rows without IDs
-      filtered_vector <- idData[idData != "unknown"] ##Some data is labeled "unknown", also filter out
+      # Initialize filtered_vector
+      filtered_vector <- c()
+      
+      if (!is.na(response_content)) {
+        # Read tsv content
+        tsv_df <- read_tsv(response_content, show_col_types = FALSE, col_types = cols(.default = col_guess()))
+        # Obtain ID mapping data
+        idData <- na.omit(tsv_df$database_identifier)
+        filtered_vector <- idData[idData != "unknown"]
+      } else {
+        print(paste("Response data cannot be converted to tsv file for study:", study_id))
+      }
       
       if (length(filtered_vector) > 0) {
         tempDF <- data.frame(
@@ -218,30 +235,45 @@ download_maf_files <- function(study_id, maf_filenames) {
           stringsAsFactors = FALSE
         )
         
-        #Combine data from calls together; based on file name to avoid overwritting when 2 maf files exist per study.     
-        df_list[[maf_filename]] <- tempDF
+        # Combine data from calls together; based on file name
+        df_list_sanityCheck[[maf_filename]] <- tempDF
       } else {
         message("No valid IDs found in file: ", maf_filename)
       }
+      
     } else {
       warning("Failed to access MAF file: ", maf_filename, " for study: ", study_id)
     }
   }
   
-  return(df_list)
+  return(df_list_sanityCheck)
 }
 
 # Initialize master list
-all_dfs <- list()
+all_dfs_sanityCheck <- list()
 
 # Loop through each study ID and save the MAF files ID data
-for (study_id in names(MAF_File_Names[1:20])) {
+##Running from last failed file (MTBLS1824, number 816) to debug/save time.
+###Another fail (if (length(res) == 0 || res == -1) { :   missing value where TRUE/FALSE needed ) at MTBLS2914, number 1041. Resuming from next file again.
+##Same error after MTBLS4273; number 1181; resuming from 1182.
+###Different error, got stuck on study MTBLS5585, number 1289, resuming from 1290
+##Same error after MTBLS6586; number 1346; resuming from 1347.
+##Same error after MTBLS8920; number 1516; resuming from 1517
+##Same error after MTBLS8954; number 1520; resuming from 1521
+##Same error after MTBLS9087; number 1530; resuming from 1531
+##Same error after MTBLS9522; number 1559; resuming from 1560
+##Same error after MTBLS9662; number 1565; resuming from 1566
+##Same error after MTBLS9665; number 1566; resuming from 1567 --> after adding waiting time of 5 sec. Perhaps latest studies do not all contain .maf file?
+##Same error after MTBLS9795; number 1575; resuming from 1576 
+##Same error after MTBLS10002; number 1598; resuming from 1599
+##Same error after MTBLS10051; number 1602; resuming from 1603
+for (study_id in names(MAF_File_Names)) {
   
 # Get MAF file names for current study ID
 maf_filename <- MAF_File_Names[[study_id]]
 
  # Skip if there was an error retrieving MAF files
-  if (length(maf_filename) == 1 && grepl("Error:", maf_files)) {
+  if (length(maf_filename) == 1 && grepl("Error:", maf_filename)) {
     cat(maf_filename, "\n")
     next # Skip to the next study ID
   }
@@ -249,12 +281,12 @@ maf_filename <- MAF_File_Names[[study_id]]
 study_list <- download_maf_files(study_id, maf_filename)
 # Append only if data was returned
   if (length(study_list) > 0) {
-    all_dfs <- c(all_dfs, study_list)
+    all_dfs_sanityCheck <- c(all_dfs_sanityCheck, study_list)
   }
 }
 
 # Combine all results into one dataframe
-finalDF <- do.call(rbind, all_dfs)
+finalDF_sanityCheck <- do.call(rbind, all_dfs_sanityCheck)
 ```
 
 
