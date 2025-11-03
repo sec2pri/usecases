@@ -220,7 +220,7 @@ download_maf_files <- function(study_id, maf_filenames) {
       
       if (!is.na(response_content)) {
         # Read tsv content
-        tsv_df <- read_tsv(response_content, show_col_types = FALSE, col_types = cols(.default = col_guess()))
+        tsv_df <- read_tsv(file = I(response_content), show_col_types = FALSE, col_types = cols(.default = col_guess()))
         # Obtain ID mapping data
         idData <- na.omit(tsv_df$database_identifier)
         filtered_vector <- idData[idData != "unknown"]
@@ -241,7 +241,10 @@ download_maf_files <- function(study_id, maf_filenames) {
         message("No valid IDs found in file: ", maf_filename)
       }
       
-    } else {
+    } else if (status_code(response) == 404){
+      message( maf_filename, ": Error 404 Not Found is an HTTP status code indicating that the server could not find the requested page. This error typically occurs when the URL is incorrect, the page has been moved or deleted, or there are issues with the server configuration.")
+    } 
+    else {
       warning("Failed to access MAF file: ", maf_filename, " for study: ", study_id)
     }
   }
@@ -254,19 +257,7 @@ all_dfs_sanityCheck <- list()
 
 # Loop through each study ID and save the MAF files ID data
 ##Running from last failed file (MTBLS1824, number 816) to debug/save time.
-###Another fail (if (length(res) == 0 || res == -1) { :   missing value where TRUE/FALSE needed ) at MTBLS2914, number 1041. Resuming from next file again.
-##Same error after MTBLS4273; number 1181; resuming from 1182.
-###Different error, got stuck on study MTBLS5585, number 1289, resuming from 1290
-##Same error after MTBLS6586; number 1346; resuming from 1347.
-##Same error after MTBLS8920; number 1516; resuming from 1517
-##Same error after MTBLS8954; number 1520; resuming from 1521
-##Same error after MTBLS9087; number 1530; resuming from 1531
-##Same error after MTBLS9522; number 1559; resuming from 1560
-##Same error after MTBLS9662; number 1565; resuming from 1566
-##Same error after MTBLS9665; number 1566; resuming from 1567 --> after adding waiting time of 5 sec. Perhaps latest studies do not all contain .maf file?
-##Same error after MTBLS9795; number 1575; resuming from 1576 
-##Same error after MTBLS10002; number 1598; resuming from 1599
-##Same error after MTBLS10051; number 1602; resuming from 1603
+
 for (study_id in names(MAF_File_Names)) {
   
 # Get MAF file names for current study ID
