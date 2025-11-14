@@ -279,6 +279,15 @@ study_list <- download_maf_files(study_id, maf_filename)
 # Combine all results into one dataframe
 finalDF_sanityCheck <- do.call(rbind, all_dfs_sanityCheck)
 ```
+##Compare final Dataframe to list of secondary ChEBIs
+tba
+```{r}
+includedIDs <-length(unique(finalDF_sanityCheck$studyName))
+print(paste("Number of study IDs with ChEBI IDs: ",includedIDs))
+notIncludedStudies <- length(setdiff(allstudyIds$study, finalDF_sanityCheck$studyName))
+print(paste("Number of study IDs not included in analysis: ",notIncludedStudies))
+#finalDF_sanityCheck$IDs plot against studyName column?
+```
 
 
 ### 2.x Print all use package versions
