@@ -280,13 +280,40 @@ study_list <- download_maf_files(study_id, maf_filename)
 finalDF_sanityCheck <- do.call(rbind, all_dfs_sanityCheck)
 ```
 ##Compare final Dataframe to list of secondary ChEBIs
-tba
+
 ```{r}
-includedIDs <-length(unique(finalDF_sanityCheck$studyName))
+##Clean up dataframe IDs with | symbol for multiple IDs
+df_split <- finalDF_sanityCheck %>%
+  separate_rows(IDs, sep = "\\|")
+##Remove "empty" IDs e.g. '-'
+df_clean <- df_split[!grepl("-", df_split$IDs, fixed = TRUE), ]
+##Remove IDs that do not start with ChEBI (e.g. '12345' could be ChEBI but provenance not clear to include in analysis)
+df_filtered <- df_clean[grepl("^CHEBI", df_clean$IDs), ]
+
+includedIDs <-length(unique(df_filtered$studyName))
 print(paste("Number of study IDs with ChEBI IDs: ",includedIDs))
-notIncludedStudies <- length(setdiff(allstudyIds$study, finalDF_sanityCheck$studyName))
+notIncludedStudies <- length(setdiff(allstudyIds$study, df_filtered$studyName))
 print(paste("Number of study IDs not included in analysis: ",notIncludedStudies))
-#finalDF_sanityCheck$IDs plot against studyName column?
+
+##Read in ChEBI sec and pri ID data
+totalChEBI <- read.csv(paste0(workingDirectory, '/ChEBI_secID2priID.tsv'), header = TRUE, sep = "\t")
+
+#Compare unique overlap with sec and pri IDs and print results
+print(paste("Total number of unique ChEBI IDs: ", length(unique(df_filtered$IDs))))
+overlapSecIDs <- intersect(unique(df_filtered$IDs),totalChEBI$secondaryID)
+print(paste("Total number of unique secondary IDs: ", length(overlapSecIDs)))
+overlapPriIDs <- intersect(unique(df_filtered$IDs),totalChEBI$primaryID)
+print(paste("Total number of unique primary IDs: ", length(overlapPriIDs)))
+
+#Measure total sec ID occurance
+overlapSecIDsIndividual <- intersect(df_filtered$IDs,totalChEBI$secondaryID)
+print(paste("Total number of secondary ID occurrences: ", length(overlapSecIDsIndividual)))
+
+##Check which IDs are not on list primary and secondary but found in datasets:
+combinedSecandPriIDs <- unique(c(totalChEBI$primaryID, totalChEBI$secondaryID))
+non_overlap <- df_filtered[!df_filtered$IDs %in% combinedSecandPriIDs, ]
+print(paste("IDs not matching pri and sec list for studies in Metabolights: ", length(non_overlap$IDs)))
+
 ```
 
 
