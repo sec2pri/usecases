@@ -296,23 +296,22 @@ notIncludedStudies <- length(setdiff(allstudyIds$study, df_filtered$studyName))
 print(paste("Number of study IDs not included in analysis: ",notIncludedStudies))
 
 ##Read in ChEBI sec and pri ID data
-totalChEBI <- read.csv(paste0(workingDirectory, '/ChEBI_secID2priID.tsv'), header = TRUE, sep = "\t")
+secChEBI <- read.csv(paste0(workingDirectory, '/ChEBI_secID2priID.tsv'), header = TRUE, sep = "\t")
+
+##Read in ChEBI all pri ID data
+totalChEBI <- read.csv(paste0(workingDirectory, '/ChEBI_priIDs.tsv'), header = TRUE, sep = "\t")
 
 #Compare unique overlap with sec and pri IDs and print results
-print(paste("Total number of unique ChEBI IDs: ", length(unique(df_filtered$IDs))))
-overlapSecIDs <- intersect(unique(df_filtered$IDs),totalChEBI$secondaryID)
-print(paste("Total number of unique secondary IDs: ", length(overlapSecIDs)))
+print(paste("Total number of unique ChEBI IDs in Metabolights: ", length(unique(df_filtered$IDs))))
+overlapSecIDs <- intersect(unique(df_filtered$IDs),secChEBI$secondaryID)
+print(paste("Total number of unique secondary IDs in Metabolights: ", length(overlapSecIDs)))
 overlapPriIDs <- intersect(unique(df_filtered$IDs),totalChEBI$primaryID)
-print(paste("Total number of unique primary IDs: ", length(overlapPriIDs)))
-
-#Measure total sec ID occurance
-overlapSecIDsIndividual <- intersect(df_filtered$IDs,totalChEBI$secondaryID)
-print(paste("Total number of secondary ID occurrences: ", length(overlapSecIDsIndividual)))
+print(paste("Total number of unique primary IDs in Metabolights: ", length(overlapPriIDs)))
 
 ##Check which IDs are not on list primary and secondary but found in datasets:
-combinedSecandPriIDs <- unique(c(totalChEBI$primaryID, totalChEBI$secondaryID))
+combinedSecandPriIDs <- unique(c(totalChEBI$primaryID, secChEBI$secondaryID))
 non_overlap <- df_filtered[!df_filtered$IDs %in% combinedSecandPriIDs, ]
-print(paste("IDs not matching pri and sec list for studies in Metabolights: ", length(non_overlap$IDs)))
+print(paste("IDs not matching pri and sec list for studies in Metabolights: ", length(unique(non_overlap$IDs))))
 
 ```
 
