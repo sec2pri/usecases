@@ -19,11 +19,20 @@ if(!"rstudioapi" %in% installed.packages()) BiocManager::install("rstudioapi")
 if(!"markdown" %in% installed.packages()){install.packages("markdown")}
 if(!"rmarkdown" %in% installed.packages()){install.packages("rmarkdown")}
 if(!"dplyr" %in% installed.packages()){install.packages("dplyr")}
+if(!"tidyr" %in% installed.packages()){install.packages("tidyr")}
+if(!"downloader" %in% installed.packages()){install.packages("downloader")}
+if(!"httr" %in% installed.packages()){install.packages("httr")}
+if(!"data.table" %in% installed.packages()){install.packages("data.table")}
+if(!"stringr" %in% installed.packages()){install.packages("stringr")}
 
 #load libraries
 library(rstudioapi)
 library(dplyr)
 library(tidyr)
+library(downloader)
+library(httr)
+library(data.table)
+library(stringr)
 
 # set working environment to current folder
 workingDirectory <- setwd(dirname(rstudioapi::getSourceEditorContext()$path))
@@ -35,15 +44,24 @@ We filter out the symbols which are used as both primary and secondary symbols (
 
 ```{r, include=FALSE}
 if(!file.exists("HGNC_secID2priID.tsv")){
-  #download.file('https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), method = "wget", extra = "-r -p --random-wait") ##Replace with Zenodo download when available!
+  
+  download.file('https://raw.githubusercontent.com/sec2pri/mapping_preprocessing/refs/heads/main/datasources/hgnc/data/HGNC_secID2priID.tsv', destfile=paste0(workingDirectory, '/dataInput/HGNC_secID2priID.tsv'), method = "libcurl", extra = "-r -p --random-wait") ##Replace with Zenodo download when available!
 }
 
-HGNCMappings <- EnsemblReactome <- read.delim(paste0(workingDirectory, '/dataInput/HGNC_secID2priID.tsv'), header = TRUE, sep = "\t", dec = ".") #Create dataframe from HGNC Symbols data
+HGNCMappings <- read.delim(paste0(workingDirectory, '/dataInput/HGNC_secID2priID.tsv'), header = TRUE, sep = "\t", dec = ".") #Create dataframe from HGNC Symbols data
 ##Create unique set of primary IDs (without overlap to secondaries)
 primaryHGNCSymbols <- setdiff(HGNCMappings$primarySymbol, HGNCMappings$secondarySymbol)
 
 ##Create unique set of secondary IDs (without overlap to primaries)
 secondaryHGNCSymbols <- setdiff(HGNCMappings$secondarySymbol, HGNCMappings$primarySymbol)
+
+##Print some stats on the available data
+paste0("Available primary IDs for HGNC: ", length(primaryHGNCSymbols))
+paste0("Available secondary IDs for HGNC: ", length(secondaryHGNCSymbols))
+##Check overlap between prim and sec to validate results:
+paste0("Number of Secondary IDs in list primary: ", length(secondaryHGNCSymbols)-length(setdiff(secondaryHGNCSymbols, primaryHGNCSymbols)) )
+##Check overlap between sec and pri to validate results:
+paste0("Number of Primary IDs in list secondary: ", length(primaryHGNCSymbols)-length(setdiff(primaryHGNCSymbols, secondaryHGNCSymbols)) )
 ```
 
 ## 2. Data Download
@@ -95,8 +113,8 @@ for (i in 1:length(nrow(Kegg_maps_total[1]))) {
 
 ##Keep only dataframes with name "_total" to save space
 #rm(list = ls()[!grepl("_total", ls())])
-retain = c("primaryHGNCSymbols", "secondaryHGNCSymbols", "workingDirectory", "retain")
-rm(list=setdiff(ls(), retain))
+#retain = c("primaryHGNCSymbols", "secondaryHGNCSymbols", "workingDirectory", "retain")
+#rm(list=setdiff(ls(), retain))
 ```
 Unfortunately, the KEGG database does not allow to retrieve the labels within the pathway images, so we cannot use it further in our comparison.
 
@@ -106,18 +124,18 @@ For the Reactome content, we download the Physical Entity (PE) Identifier mappin
 ##Only download the data, if not available already locally.
 ##UniProt mappings
 if(!file.exists("dataInput/UniProt2Reactome.txt")){
-  download.file('https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), method = "wget", extra = "-r -p --random-wait")
+  download.file('https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), method = "libcurl", extra = "-r -p --random-wait")
 }
 ##Ensembl mappings
 if(!file.exists("dataInput/Ensembl2Reactome.txt")) {
-  download.file('https://reactome.org/download/current/Ensembl2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/Ensembl2Reactome.txt'), method = "wget", extra = "-r -p --random-wait")
+  download.file('https://reactome.org/download/current/Ensembl2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/Ensembl2Reactome.txt'), method = "libcurl", extra = "-r -p --random-wait")
 }
 ##NCBI mappings
 if(!file.exists("dataInput/NCBI2Reactome.txt")) {
-  download.file('https://reactome.org/download/current/NCBI2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/NCBI2Reactome.txt'), method = "wget", extra = "-r -p --random-wait")
+  download.file('https://reactome.org/download/current/NCBI2Reactome_PE_Pathway.txt', destfile=paste0(workingDirectory, '/dataInput/NCBI2Reactome.txt'), method = "libcurl", extra = "-r -p --random-wait")
 }
 
-##Store the data in a dataframe, extract the relevant information, and merge results from three mapping systems (if needed):
+##Store the data in a dataframe, extract the relevant information, and merge results from three files:
 #Uniprot mappings
 UniprotReactome <- read.delim(paste0(workingDirectory, '/dataInput/UniProt2Reactome.txt'), header = FALSE, sep = "\t", dec = ".") #Create dataframe from input data
 UniprotReactome <- UniprotReactome[UniprotReactome[8] == 'Homo sapiens',] #Only keep data for one species (Homo sapiens)
@@ -143,28 +161,52 @@ NCBIReactome <- unique(NCBIReactome) #Keep unique symbols only
 #Merge the data together
 df_list <- list(UniprotReactome, EnsemblReactome, NCBIReactome)
 mergedReactome <- Reduce(function(x, y) merge(x, y, all=TRUE), df_list, accumulate=FALSE)
-#mergedReactome <- unique(mergedReactome) #Keep unique symbols only (to check if above function worked correctly)
+mergedReactome <- unique(mergedReactome) #Keep unique symbols only (to check if above function worked correctly)
 
-#Remove unnecessary data
-retain <- append(retain, "mergedReactome")
-rm(list=setdiff(ls(), retain))
 ```
 
 Compare the Reactome data against primary symbols first, then against secondary symbols, last count how many were not matching at all.
 ```{r}
-##Check overlap between prim and sec:
-uniqueSec <-  setdiff(secondaryHGNCSymbols, primaryHGNCSymbols)
-
 ##Convert reactome data to vector format:
 mergedReactomeVector <- mergedReactome[['HGNC']]
+#Amount
+paste0("Total number of included IDs: ", length(unique(mergedReactomeVector)))
+
 ##Check primary symbols:
 primaryMatchesReactome <- intersect(primaryHGNCSymbols, mergedReactomeVector)
 ##Amount:
-amountPrimaryMatchesReactome <- length(primaryMatchesReactome)
+paste0("Primary HGNC IDs in Reactome data: ", length(primaryMatchesReactome))
 ##Check secondary symbols:
-secondaryMatchesReactome <- intersect(uniqueSec, mergedReactomeVector)
+secondaryMatchesReactome <- intersect(secondaryHGNCSymbols, mergedReactomeVector)
 ##Amount:
-amountSecondaryMatchesReactome <- length(secondaryMatchesReactome)
+paste0("Secondary HGNC IDs in Reactome data: ", length(secondaryMatchesReactome))
+
+##Check remaining (unknown) symbols:
+totalHGNCSymbols <- union(primaryHGNCSymbols, secondaryHGNCSymbols)
+
+unknownMatchesReactome <- setdiff(mergedReactomeVector, totalHGNCSymbols)
+##Amount:
+paste0("Unknown IDs in Reactome data: ", length(unknownMatchesReactome))
+
+# Function to match each pattern against remaining data for secondary IDs
+match_results <- lapply(secondaryHGNCSymbols, function(pat) {
+  # Use fixed=FALSE for regex, ignore.case=TRUE for case-insensitive match
+  matches <- grepl(pat, unknownMatchesReactome, ignore.case = TRUE, perl = TRUE)
+  
+  # Return matching elements
+  unknownMatchesReactome[matches]
+})
+
+# Name the list by the patterns
+names(match_results) <- secondaryHGNCSymbols
+
+element_counts <- lengths(match_results)
+filtered_list <- match_results[element_counts > 1]
+
+#Safe results for later analysis
+capture.output(print(filtered_list), file = paste0(workingDirectory, "/dataOutput/HGNC_secIDs_Reactome_ManualCheckRequired.txt"))
+
+
 ```
 
 
