@@ -96,6 +96,46 @@ getStudies <- function() {
 allstudyIds <- getStudies()
 ##Convert response to a vector
 vStudyIds <- as.vector(allstudyIds[[1]])
+
+##Collected Release Date for comparisons later:
+get_release_date <- function(study_ids) {
+  
+  ##Create dataframe to collect data in:
+  release_files <- data.frame(
+    study_id = character(),
+    study_release = character(),
+    stringsAsFactors = FALSE
+  )
+
+  for (study_id in study_ids) {
+    
+    url <- paste0(BASE_URL, "/", study_id)
+    response <- GET(url)
+    
+    if (status_code(response) == 200) {
+      files_info <- fromJSON(content(response, as = "text", encoding = "UTF-8"))
+      study_release <- files_info$isaInvestigation$publicReleaseDate
+      
+      newdata <- data.frame(
+        study_id = study_id,
+        study_release = study_release,
+        stringsAsFactors = FALSE
+      )
+      
+      release_files <- rbind(release_files, newdata)
+      
+    } else {
+      warning("Failed to retrieve files list for study: ", study_id)
+    }
+    
+  }
+  ##Retrieve all data
+  return(release_files)
+}
+
+# Call the function to retrieve MAF file names for the study IDs
+Release_Files_Dates <- get_release_date(vStudyIds)
+
 ```
 
 ### 2.2 Get all .maf file names for available study IDs
@@ -256,7 +296,6 @@ download_maf_files <- function(study_id, maf_filenames) {
 all_dfs_sanityCheck <- list()
 
 # Loop through each study ID and save the MAF files ID data
-##Running from last failed file (MTBLS1824, number 816) to debug/save time.
 
 for (study_id in names(MAF_File_Names)) {
   
@@ -279,8 +318,7 @@ study_list <- download_maf_files(study_id, maf_filename)
 # Combine all results into one dataframe
 finalDF_sanityCheck <- do.call(rbind, all_dfs_sanityCheck)
 ```
-##Compare final Dataframe to list of secondary ChEBIs
-
+##Clean ID list before comparison:
 ```{r}
 ##Clean up dataframe IDs with | symbol for multiple IDs
 df_split <- finalDF_sanityCheck %>%
@@ -289,10 +327,17 @@ df_split <- finalDF_sanityCheck %>%
 df_clean <- df_split[!grepl("-", df_split$IDs, fixed = TRUE), ]
 ##Remove IDs that do not start with ChEBI (e.g. '12345' could be ChEBI but provenance not clear to include in analysis)
 df_filtered <- df_clean[grepl("^CHEBI", df_clean$IDs), ]
+```
 
+
+##Compare final Dataframe to list of secondary ChEBIs
+```{r}
+##Some stats on included data:
+totalincludedIDs <-length(unique(finalDF_sanityCheck$studyName))
+print(paste("Total number of study IDs with ChEBI IDs: ",totalincludedIDs))
 includedIDs <-length(unique(df_filtered$studyName))
 print(paste("Number of study IDs with ChEBI IDs: ",includedIDs))
-notIncludedStudies <- length(setdiff(allstudyIds$study, df_filtered$studyName))
+notIncludedStudies <- length(unique(setdiff(finalDF_sanityCheck$studyName, df_filtered$studyName)))
 print(paste("Number of study IDs not included in analysis: ",notIncludedStudies))
 
 ##Read in ChEBI sec and pri ID data
@@ -305,13 +350,37 @@ totalChEBI <- read.csv(paste0(workingDirectory, '/ChEBI_priIDs.tsv'), header = T
 print(paste("Total number of unique ChEBI IDs in Metabolights: ", length(unique(df_filtered$IDs))))
 overlapSecIDs <- intersect(unique(df_filtered$IDs),secChEBI$secondaryID)
 print(paste("Total number of unique secondary IDs in Metabolights: ", length(overlapSecIDs)))
-overlapPriIDs <- intersect(unique(df_filtered$IDs),totalChEBI$primaryID)
-print(paste("Total number of unique primary IDs in Metabolights: ", length(overlapPriIDs)))
 
-##Check which IDs are not on list primary and secondary but found in datasets:
-combinedSecandPriIDs <- unique(c(totalChEBI$primaryID, secChEBI$secondaryID))
-non_overlap <- df_filtered[!df_filtered$IDs %in% combinedSecandPriIDs, ]
-print(paste("IDs not matching pri and sec list for studies in Metabolights: ", length(unique(non_overlap$IDs))))
+##Percentage of secondary IDs over total of unique IDs:
+print(paste("Percentage of secondary IDs in total:", (length(overlapSecIDs)*100)/length(unique(df_filtered$IDs))))
+
+##Check in how many study IDs the secondary IDs occur, and if some studies have a high percentage of sec. IDs:
+# Filter rows where column 2 matches IDs
+df_studiesSec <- df_filtered[df_filtered$IDs %in% secChEBI$secondaryID, ]
+print(paste("Total number of studies in Metabolights including a secondary ID: ", length(unique(df_studiesSec$studyName))))
+
+##Percentage of studies including secondary IDs:
+print(paste("Percentage of studies in Metabolights including a secondary ID:", (length(unique(df_studiesSec$studyName))*100)/length(unique(df_filtered$studyName))))
+
+
+##Analyze how many studies have more than 1 secondary ID
+df_studiesSec <- unique(df_studiesSec)
+itemCountsSec <- table(df_studiesSec$studyName)
+MoreThanOne_SecID <- sum(itemCountsSec > 1)
+
+##To visualise distribution:
+dat <- as.data.frame(itemCountsSec)
+print(paste("Average number of secondary IDs in studies:", mean(dat$Freq)))
+print(paste("Studies with more than 1 Secondary IDs:", sum(dat$Freq > 1)))
+print(paste("Highest number of secondary IDs within one study:", max(dat$Freq)))
+
+##Check which IDs are not on list primary and secondary but found in datasets (for validation of results):
+#overlapPriIDs <- intersect(unique(df_filtered$IDs),totalChEBI$primaryID)
+#print(paste("Total number of unique primary IDs in Metabolights: ", length(overlapPriIDs)))
+
+#combinedSecandPriIDs <- unique(c(totalChEBI$primaryID, secChEBI$secondaryID))
+#non_overlap <- df_filtered[!df_filtered$IDs %in% combinedSecandPriIDs, ]
+#print(paste("IDs not matching pri and sec list for studies in Metabolights: ", length(unique(non_overlap$IDs))))
 
 ```
 
