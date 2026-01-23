@@ -203,6 +203,8 @@ names(match_results) <- secondaryHGNCSymbols
 element_counts <- lengths(match_results)
 filtered_list <- match_results[element_counts > 1]
 
+paste0("Potential presence of secondary IDs in Reactome data for: ", length(filtered_list), " elements.")
+
 #Safe results for later analysis
 capture.output(print(filtered_list), file = paste0(workingDirectory, "/dataOutput/HGNC_secIDs_Reactome_ManualCheckRequired.txt"))
 
